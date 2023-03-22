@@ -26,10 +26,10 @@ class LoginPage(Page):
         lbl_pw.pack(fill=tk.X, side=tk.LEFT)
         ent_pw.pack(fill=tk.X, side=tk.LEFT)
         btn_submit1.pack(fill=tk.X, side=tk.LEFT)
-        id = ent_id.get()
-        pw = ent_pw.get()
+        LoginPage.id = ent_id.get()
+        LoginPage.pw = ent_pw.get()
 
-class UploadPage(Page):
+class UploadPage(LoginPage):
     def __init__(self, *args, **kwargs):
         Page.__init__(self, *args, **kwargs)
         lbl_insert_file = tk.Label(self, text="Deckliste",width=20, height=10)
@@ -39,6 +39,7 @@ class UploadPage(Page):
         btn_submit2 = tk.Button(self, text="Weiter",width=20, height=10)
         btn_submit2.bind('<Button-1>', self.pack_forget()), 
         lbl_insert_file.pack(fill=tk.BOTH, side=tk.TOP)
+        txt_decklist.pack(fill=tk.BOTH, side=tk.TOP)
         btn_open_file.pack(fill=tk.BOTH, side=tk.LEFT)
         btn_calculate_price.pack(fill=tk.BOTH, side=tk.LEFT)
         btn_submit2.pack(fill=tk.BOTH, side=tk.BOTTOM)
@@ -52,7 +53,7 @@ class UploadPage(Page):
         # show the open file dialog
         f = fd.askopenfile(filetypes=filetypes)
         # read the text file and show its content on the Text
-        self.txt_decklist.insert('1.0', f.readlines())
+        UploadPage.txt_decklist.insert('1.0', f.readlines())
     def deckwert_ermittlung(textfile_location, id, pw):
         # Create the webdriver object
         chrome_options = webdriver.ChromeOptions()
@@ -64,7 +65,7 @@ class UploadPage(Page):
         driver.get('https://deckstats.net')
 
         # get deckname and decklist
-        decklist, deckname = self.textdateiEinlesen(textfile_location)
+        decklist, deckname = UploadPage.textdateiEinlesen(textfile_location)
 
         # Obtain buttons by class name and click all of them
         driver.find_element(By.NAME, 'user').send_keys(id)
@@ -104,9 +105,9 @@ class UploadPage(Page):
 class DeckValuePage(Page):
     def __init__(self, *args, **kwargs):
         Page.__init__(self, *args, **kwargs)
-        lbl_mainboard_price = tk.Label(self, text="Mainboard Preis: " + mainboardPrice, width=20, height=10)
-        lbl_sideboard_price = tk.Label(self, text="Sideboard Preis: " + sideboardPrice, width=20, height=10)
-        lbl_total_price = tk.Label(self, text="Gesamtpreis: " + mainboardPrice + sideboardPrice, width=20, height=10)
+        lbl_mainboard_price = tk.Label(self, text="Mainboard Preis: " + UploadPage.mainboardPrice, width=20, height=10)
+        lbl_sideboard_price = tk.Label(self, text="Sideboard Preis: " + UploadPage.sideboardPrice, width=20, height=10)
+        lbl_total_price = tk.Label(self, text="Gesamtpreis: " + UploadPage.mainboardPrice + UploadPage.sideboardPrice, width=20, height=10)
         btn_submit3 = tk.Button(self, text="Nächstes Deck",width=20, height=10)
         btn_submit3.bind('<Button-1>', self.pack_forget())
         lbl_mainboard_price.pack(fill=tk.BOTH, side=tk.LEFT)

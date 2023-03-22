@@ -104,7 +104,7 @@ btn_submit2.bind('<Button-1>', frm_file_upload.pack_forget()),
 lbl_insert_file.pack(fill=tk.BOTH, side=tk.TOP)
 btn_open_file.pack(fill=tk.BOTH, side=tk.LEFT)
 btn_submit2.pack(fill=tk.BOTH, side=tk.BOTTOM)
-#mainboardPrice, sideboardPrice = deckwert_ermittlung('C:/Users/Fabian/Desktop/SampleDeckliste.txt', id, pw))
+mainboardPrice, sideboardPrice = deckwert_ermittlung('C:/Users/Fabian/Desktop/SampleDeckliste.txt', id, pw)
 
 # create deck value screen
 lbl_mainboard_price = tk.Label(frm_deckvalue, text="Mainboard Preis: " + mainboardPrice, width=20, height=10)
