@@ -4,7 +4,7 @@ from selenium.webdriver.support.ui import Select
 import re
 import time
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog as fd
 
 
 def deckwert_ermittlung(textfile_location, id, pw):
@@ -58,25 +58,31 @@ def textdateiEinlesen(textfile_location):
     return textfile_content, textfile_name
 
 
-def UploadAction(event=None):
-    filename = filedialog.askopenfilename()
-    print('Selected:', filename)
+def open_text_file():
+    # file type
+    filetypes = (
+        ('text files', '*.txt'),
+        ('All files', '*.*')
+    )
+    # show the open file dialog
+    f = fd.askopenfile(filetypes=filetypes)
+    # read the text file and show its content on the Text
+    txt_decklist.insert('1.0', f.readlines())
 
-# create GUI
+
+# create basic GUI
 window = tk.Tk()
 frm_login_data = tk.Frame()
 frm_file_upload = tk.Frame()
 frm_deckvalue = tk.Frame()
-lbl_title = tk.Label(
-    text="Deckwert Ermittler",
-    width=20
-)
+lbl_title = tk.Label(text="Deckwert Ermittler", width=20)
+
 # create login screen
-lbl_id = tk.Label(text="ID",width=200, height=100, master = frm_login_data)
-ent_id = tk.Entry(width=200, height=100, master = frm_login_data, textvariable = tk.StringVar(window, value='MagicNerdism'))
-lbl_pw = tk.Label(text="Password",width=200, height=100,master = frm_login_data)
-ent_pw = tk.Entry(width=200, height=100, master = frm_login_data, textvariable = tk.StringVar(window, value='Test1234'), show="*")
-btn_submit1 = tk.Button(text="Weiter",width=200, height=100, master = frm_login_data)
+lbl_id = tk.Label(frm_login_data, text="ID: ")
+ent_id = tk.Entry(frm_login_data, textvariable = tk.StringVar(window, value='MagicNerdism'))
+lbl_pw = tk.Label(frm_login_data, text="Password: ")
+ent_pw = tk.Entry(frm_login_data, textvariable = tk.StringVar(window, value='Test1234'), show="*")
+btn_submit1 = tk.Button(frm_login_data, text="Weiter")
 btn_submit1.bind('<Button-1>', frm_login_data.pack_forget())
 lbl_title.pack(fill=tk.BOTH, side=tk.TOP)
 lbl_id.pack(fill=tk.BOTH, side=tk.LEFT)
@@ -89,18 +95,25 @@ id = ent_id.get()
 pw = ent_pw.get()
 
 # create file upload screen
-lbl_insert_file = tk.Label(text="ID",width=200, height=100, master = frm_file_upload)
-btn_open_file = tk.Button(window, text='Open', command=UploadAction, master = frm_file_upload)
-btn_submit2 = tk.Button(text="Weiter",width=200, height=100, master = frm_file_upload)
-btn_submit2.bind('<Button-1>', frm_file_upload.pack_forget(), master = frm_file_upload)
+lbl_insert_file = tk.Label(frm_file_upload, text="Deckliste",width=20, height=10)
+txt_decklist = tk.Text(frm_file_upload, height=12)
+btn_open_file = tk.Button(frm_file_upload, text='Deckliste auswählen', command=open_text_file)
+btn_calculate_price = tk.Button(frm_file_upload, text='Preis ausrechnen', command=deckwert_ermittlung('C:/Users/Fabian/Desktop/SampleDeckliste.txt', id, pw))
+btn_submit2 = tk.Button(frm_file_upload, text="Weiter",width=20, height=10)
+btn_submit2.bind('<Button-1>', frm_file_upload.pack_forget()), 
 lbl_insert_file.pack(fill=tk.BOTH, side=tk.TOP)
-btn_open_file.pack()
-btn_submit2.pack()
-mainboardPrice, sideboardPrice = deckwert_ermittlung('C:/Users/Fabian/Desktop/SampleDeckliste.txt', id, pw)
+btn_open_file.pack(fill=tk.BOTH, side=tk.LEFT)
+btn_submit2.pack(fill=tk.BOTH, side=tk.BOTTOM)
+#mainboardPrice, sideboardPrice = deckwert_ermittlung('C:/Users/Fabian/Desktop/SampleDeckliste.txt', id, pw))
 
 # create deck value screen
-lbl_mainboard_price = tk.Label(text="Mainboard Preis: " + mainboardPrice, width=200, height=100, master = frm_deckvalue)
-lbl_sideboard_price = tk.Label(text="Sideboard Preis: " + sideboardPrice, width=200, height=100, master = frm_deckvalue)
-lbl_total_price = tk.Label(text="Gesamtpreis: " + mainboardPrice + sideboardPrice, width=200, height=100, master = frm_deckvalue)
-btn_submit2 = tk.Button(text="Nächstes Deck",width=200, height=100, master = frm_file_upload, frm_file_upload)
+lbl_mainboard_price = tk.Label(frm_deckvalue, text="Mainboard Preis: " + mainboardPrice, width=20, height=10)
+lbl_sideboard_price = tk.Label(frm_deckvalue, text="Sideboard Preis: " + sideboardPrice, width=20, height=10)
+lbl_total_price = tk.Label(frm_deckvalue, text="Gesamtpreis: " + mainboardPrice + sideboardPrice, width=20, height=10)
+btn_submit3 = tk.Button(frm_deckvalue, text="Nächstes Deck",width=20, height=10)
+btn_submit3.bind('<Button-1>', frm_deckvalue.pack_forget())
+lbl_mainboard_price.pack(fill=tk.BOTH, side=tk.LEFT)
+lbl_sideboard_price.pack(fill=tk.BOTH, side=tk.LEFT)
+lbl_total_price.pack(fill=tk.BOTH, side=tk.LEFT)
+btn_submit3.pack(fill=tk.BOTH, side=tk.BOTTOM)
 window.mainloop()
