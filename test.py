@@ -1,36 +1,42 @@
-from tkinter import *
-from tkinter import filedialog
+import tkinter as tk
+import time
+from gifplayer import PhotoImagePlayer
 
-def openFile():
-    tf = filedialog.askopenfilename(
-        initialdir="C:/Users/MainFrame/Desktop/", 
-        title="Open Text file", 
-        filetypes=(("Text Files", "*.txt"),)
-        )
-    path.insert(END, tf)
-    tf = open(tf)  # or tf = open(tf, 'r')
-    data = tf.read()
-    txtarea.insert(END, data)
-    tf.close()
+class App:
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.title("Pop-up Message")
 
-ws = Tk()
-ws.title("PythonGuides")
-ws.geometry("400x450")
-ws['bg']='#fb0'
+        # Create pop-up message
+        self.popup = tk.Toplevel(self.root)
+        self.popup.title("Function Running")
+        self.popup_label = tk.Label(self.popup, text="Function is running...")
+        self.popup_animation = PhotoImagePlayer(self.popup)
+        self.popup_label.pack(pady=10)
+        self.popup_animation.pack(pady=10)
+        self.popup_animation.load('loading.gif')
+        self.popup.withdraw()  # Hide the popup initially
+        
 
-txtarea = Text(ws, width=40, height=20)
-txtarea.pack(pady=20)
-
-path = Entry(ws)
-path.pack(side=LEFT, expand=True, fill=X, padx=20)
+        # Create button to trigger function
+        self.button = tk.Button(self.root, text="Run Function", command=self.run_function)
+        self.button.pack(pady=10)
 
 
+    def run_function(self):
+        # Show the pop-up message
+        self.popup.deiconify()
+        self.popup.grab_set()
+        self.popup_animation.load('loading.gif')
+        self.popup.update()
+        # Call your function here
+        time.sleep(10) 
+        self.popup.withdraw()
+        self.popup.grab_release()
 
-Button(
-    ws, 
-    text="Open File", 
-    command=openFile
-    ).pack(side=RIGHT, expand=True, fill=X, padx=20)
+    def start(self):    
+        self.root.mainloop()
 
 
-ws.mainloop()
+app = App()
+app.start()
