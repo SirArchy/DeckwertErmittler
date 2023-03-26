@@ -58,9 +58,9 @@ class UploadPage(Page):
         # this function should open the file, save it's location and it's contents + display it in textfield
         btn_open_file = ttk.Button(
             self, text='Deckliste auswählen', command= self.open_text_file)
-        btn_calculate_price = ttk.Button(self, text='Preis ausrechnen', command=lambda: [
-                                         self.save_text_file(), self.deckwert_ermittlung(), self.master.switch_frame(DeckValuePage)])
-        btn_calculate_price.bind("<Button-1>",  lambda event:self.show_gif(self))
+        btn_calculate_price = ttk.Button(self, text='Preis ausrechnen')
+        btn_calculate_price.bind("<Button-1>",  lambda :[
+                                         self.show_gif, self.save_text_file, self.deckwert_ermittlung, self.master.switch_frame(DeckValuePage)])
         lbl_insert_file.pack(fill=tk.BOTH, side=tk.TOP)
         self.txt_decklist.pack(fill=tk.BOTH, side=tk.TOP)
         btn_open_file.pack(fill=tk.BOTH, side=tk.LEFT)
@@ -91,16 +91,14 @@ class UploadPage(Page):
         textfile_name = re.search("[ \w-]+?(?=\.)", deckPath).group()
         return textfile_name
 
-    @staticmethod
     def show_gif(self):
         self.gif_viewer = tk.Toplevel(self)
-        lbl_text = tk.Label(self, text="Deckwerte werden ermittelt...")
+        lbl_text = tk.Label(self.gif_viewer, text="Deckwerte werden ermittelt...")
         lbl_text.pack(fill=tk.BOTH, side=tk.TOP)
         GifViewer(self.gif_viewer, "loading.gif")
         t = threading.Thread(target=self.deckwert_ermittlung, args=(self.gif_viewer,))
         t.start()
 
-    @staticmethod
     def deckwert_ermittlung(self): #✔️
         global id
         global pw
@@ -170,7 +168,6 @@ class UploadPage(Page):
             By.XPATH, "(//td[@title='Total price on Cardmarket for the card versions listed'])[2]").get_attribute("innerHTML")
         totalPrice = str(float(mainboardPrice.replace('€',''))+float(sideboardPrice.replace('€','')))
         driver.quit()
-        self.gif_viewer.destroy()
 
 
 class DeckValuePage(Page):
@@ -181,12 +178,11 @@ class DeckValuePage(Page):
         global saved_prices
         Page.__init__(self, *args, **kwargs)
         lbl_mainboard_price = ttk.Label(
-            self, text="Mainboard Preis: " + mainboardPrice, width=20) #❌
+            self, textvariable=StrVar_mainboardPrice, width=20) #❌
         lbl_sideboard_price = ttk.Label(
-            self, text="Sideboard Preis: " + sideboardPrice, width=20) #❌
+            self, textvariable=StrVar_sideboardPrice, width=20) #❌
         lbl_total_price = ttk.Label(
-            self, text="Gesamtpreis: " + totalPrice + " €", width=20) #❌
-        
+            self, textvariable=StrVar_totalPrice, width=20) #❌
         prices_str = deckName + "/n" + mainboardPrice + "/n" + sideboardPrice + "/n" + totalPrice
         btn_submit3 = ttk.Button(self, text="Preise sichern & nächstes Deck", width=20,
                                  command=lambda: [self.master.switch_frame(UploadPage), self.save_prices_in_str(prices_str)])
@@ -215,8 +211,8 @@ class GifViewer:
         self.load_gif_frames()
         self.current_frame = 0
         
-        self.canvas = tk.Canvas(self.master, width=300, height=300)
-        self.canvas.pack()
+        self.canvas = tk.Canvas(self.master, height=140, width=130)
+        self.canvas.pack(side=tk.BOTTOM)
         
         self.animate_gif()
 
@@ -263,8 +259,11 @@ if __name__ == "__main__":
     deckContent = ""
     deckName = ""
     mainboardPrice = ""
+    StrVar_mainboardPrice = tk.StringVar(root, "Mainboard Preis: " + mainboardPrice)
     sideboardPrice = ""
+    StrVar_sideboardPrice = tk.StringVar(root, "Sideboard Preis: " + mainboardPrice)
     totalPrice = ""
+    StrVar_totalPrice = tk.StringVar(root, "Gesamtpreis: " + mainboardPrice + " €")
     saved_prices = ""
     main = MainView(root)
     main.pack(side="top", fill="both", expand=True)
