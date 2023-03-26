@@ -46,6 +46,6 @@ def run_function(gif_viewer):
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Main Window")
-    button = tk.Button(root, text="Show Gif", command=show_gif)
+    button = tk.Button(root, text="Show Gif", command=lambda: show_gif)
     button.pack()
     root.mainloop()

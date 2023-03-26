@@ -1,6 +1,7 @@
 import re
 import tkinter as tk
 from tkinter import ttk
+import threading
 from PIL import Image, ImageTk
 from itertools import count, cycle
 from tkinter import filedialog as fd
@@ -52,23 +53,14 @@ class UploadPage(Page):
     parent = LoginPage
     def __init__(self, *args, **kwargs):
         Page.__init__(self, *args, **kwargs)
-       # Create pop-up message
-        self.popup = tk.Toplevel(self)
-        self.popup.title("Function Running")
-        self.popup_label = tk.Label(self.popup, text="Function is running...")
-        self.popup_animation = ImageLabel(self.popup)
-        self.popup_label.pack(pady=10)
-        self.popup_animation.pack(pady=10)
-        self.popup_animation.load('loading.gif')
-        self.popup.withdraw()  # Hide the popup initially
-
         lbl_insert_file = ttk.Label(self, text="Deckliste", width=20)
         self.txt_decklist = tk.Text(self, height=12)
         # this function should open the file, save it's location and it's contents + display it in textfield
         btn_open_file = ttk.Button(
-            self, text='Deckliste auswählen', command= lambda: self.open_text_file())
+            self, text='Deckliste auswählen', command= self.open_text_file)
         btn_calculate_price = ttk.Button(self, text='Preis ausrechnen', command=lambda: [
                                          self.save_text_file(), self.deckwert_ermittlung(), self.master.switch_frame(DeckValuePage)])
+        btn_calculate_price.bind("<Button-1>",  lambda event:self.show_gif(self))
         lbl_insert_file.pack(fill=tk.BOTH, side=tk.TOP)
         self.txt_decklist.pack(fill=tk.BOTH, side=tk.TOP)
         btn_open_file.pack(fill=tk.BOTH, side=tk.LEFT)
@@ -99,6 +91,16 @@ class UploadPage(Page):
         textfile_name = re.search("[ \w-]+?(?=\.)", deckPath).group()
         return textfile_name
 
+    @staticmethod
+    def show_gif(self):
+        self.gif_viewer = tk.Toplevel(self)
+        lbl_text = tk.Label(self, text="Deckwerte werden ermittelt...")
+        lbl_text.pack(fill=tk.BOTH, side=tk.TOP)
+        GifViewer(self.gif_viewer, "loading.gif")
+        t = threading.Thread(target=self.deckwert_ermittlung, args=(self.gif_viewer,))
+        t.start()
+
+    @staticmethod
     def deckwert_ermittlung(self): #✔️
         global id
         global pw
@@ -107,15 +109,10 @@ class UploadPage(Page):
         global sideboardPrice
         global totalPrice
         global deckName
-         # Show the pop-up message
-        self.popup.deiconify()
-        self.popup.grab_set()
-        self.popup_animation.next_frame()
-        self.popup.update()
         # Create the webdriver object
         chrome_options = webdriver.ChromeOptions()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument('window-size=1920x1080')
+        #chrome_options.add_argument("--headless")
+        #chrome_options.add_argument('window-size=1920x1080')
         # enter your download directory here
         prefs = {'download.default_directory': ''}
         chrome_options.add_experimental_option('prefs', prefs)
@@ -123,7 +120,7 @@ class UploadPage(Page):
         # get website link
         driver.get('https://deckstats.net')
         # get deckname and decklist
-        deckName = self.deckNameEinlesen()
+        deckName = UploadPage.deckNameEinlesen(self)
         # Obtain buttons by class name and click all of them
         driver.find_element(By.NAME, 'user').send_keys(id)
         driver.find_element(By.NAME, 'passwrd').send_keys(pw)
@@ -173,9 +170,7 @@ class UploadPage(Page):
             By.XPATH, "(//td[@title='Total price on Cardmarket for the card versions listed'])[2]").get_attribute("innerHTML")
         totalPrice = str(float(mainboardPrice.replace('€',''))+float(sideboardPrice.replace('€','')))
         driver.quit()
-        self.popup_animation.unload()
-        self.popup.withdraw()
-        self.popup.grab_release()
+        self.gif_viewer.destroy()
 
 
 class DeckValuePage(Page):
@@ -195,7 +190,7 @@ class DeckValuePage(Page):
         prices_str = deckName + "/n" + mainboardPrice + "/n" + sideboardPrice + "/n" + totalPrice
         btn_submit3 = ttk.Button(self, text="Preise sichern & nächstes Deck", width=20,
                                  command=lambda: [self.master.switch_frame(UploadPage), self.save_prices_in_str(prices_str)])
-        btn_submit4 = ttk.Button(self, text="Alle Preise als Datei abspeichern", width=20, command=lambda: self.save_prices_in_file())
+        btn_submit4 = ttk.Button(self, text="Alle Preise als Datei abspeichern", width=20, command= self.save_prices_in_file)
         btn_submit3.bind('<Button-1>', self.pack_forget())
         lbl_mainboard_price.pack(fill=tk.BOTH, side=tk.LEFT)
         lbl_sideboard_price.pack(fill=tk.BOTH, side=tk.LEFT)
@@ -212,43 +207,35 @@ class DeckValuePage(Page):
         f.write(saved_prices)
         f.close()
 
-class ImageLabel(tk.Label):
-    """
-    A Label that displays images, and plays them if they are gifs
-    :im: A PIL Image instance or a string filename
-    """
-    def load(self, im):
-        if isinstance(im, str):
-            im = Image.open(im)
-        frames = []
+class GifViewer:
+    def __init__(self, master, gif_path):
+        self.master = master
+        self.gif_path = gif_path
+        self.gif_frames = []
+        self.load_gif_frames()
+        self.current_frame = 0
+        
+        self.canvas = tk.Canvas(self.master, width=300, height=300)
+        self.canvas.pack()
+        
+        self.animate_gif()
 
+    def load_gif_frames(self):
+        gif_image = Image.open(self.gif_path)
         try:
-            for i in count(1):
-                frames.append(ImageTk.PhotoImage(im.copy()))
-                im.seek(i)
+            while True:
+                gif_frame = gif_image.copy()
+                self.gif_frames.append(ImageTk.PhotoImage(gif_frame))
+                gif_image.seek(len(self.gif_frames))  # seek to next frame
         except EOFError:
             pass
 
-        self.frames = cycle(frames)
+    def animate_gif(self):
+        self.canvas.delete("all")
+        self.canvas.create_image(0, 0, anchor=tk.NW, image=self.gif_frames[self.current_frame])
+        self.current_frame = (self.current_frame + 1) % len(self.gif_frames)
+        self.master.after(20, self.animate_gif)  # call itself again after 100ms
 
-        try:
-            self.delay = im.info['duration']
-        except:
-            self.delay = 100
-
-        if len(frames) == 1:
-            self.config(image=next(self.frames))
-        else:
-            self.next_frame()
-
-    def unload(self):
-        self.config(image=None)
-        self.frames = None
-
-    def next_frame(self):
-        if self.frames:
-            self.config(image=next(self.frames))
-            self.after(self.delay, self.next_frame)
 
 
 class MainView(tk.Frame):
