@@ -108,6 +108,7 @@ class UploadPage(Page):
         t.start()
 
     def deckwert_ermittlung(self): #✔️
+        # THROW ERROR MESSAGE WHEN NO FILE SELECTED
         global id
         global pw
         global deckContent
@@ -192,17 +193,16 @@ class DeckValuePage(Page):
         lbl_total_price = ttk.Label(
             self, textvariable=StrVar_totalPrice, width=20) #❌
         prices_str = deckName + "/n" + mainboardPrice + "/n" + sideboardPrice + "/n" + totalPrice
-        btn_submit3 = ttk.Button(self, text="Preise sichern & nächstes Deck", width=20,
-                                 command=lambda: [self.master.switch_frame(UploadPage), self.save_prices_in_str(prices_str)])
-        btn_submit4 = ttk.Button(self, text="Alle Preise als Datei abspeichern", width=20, command= self.save_prices_in_file)
+        btn_submit3 = ttk.Button(self, text="Preise sichern & nächstes Deck", command=lambda: [self.save_prices_in_str(prices_str), self.master.switch_frame(UploadPage)])
+        btn_submit4 = ttk.Button(self, text="Alle Preise als Datei abspeichern", command= lambda: [self.save_prices_in_str(prices_str), self.save_prices_in_file])
         btn_submit3.bind('<Button-1>', self.pack_forget())
-        lbl_mainboard_price.pack(fill=tk.BOTH, side=tk.LEFT)
-        lbl_sideboard_price.pack(fill=tk.BOTH, side=tk.LEFT)
-        lbl_total_price.pack(fill=tk.BOTH, side=tk.LEFT)
+        lbl_mainboard_price.pack(fill=tk.BOTH, side=tk.TOP)
+        lbl_sideboard_price.pack(fill=tk.BOTH, side=tk.TOP)
+        lbl_total_price.pack(fill=tk.BOTH, side=tk.TOP)
         btn_submit3.pack(fill=tk.BOTH, side=tk.BOTTOM)
         btn_submit4.pack(fill=tk.BOTH, side=tk.BOTTOM)
     def save_prices_in_str(self, prices):
-        saved_prices = saved_prices + "/n" + prices
+        saved_prices = saved_prices + "/n" + prices #UnboundLocalError: cannot access local variable 'saved_prices' where it is not associated with a value
     def save_prices_in_file(self):
         files = [('Text Document', '*.txt')]
         f = fd.asksaveasfile(filetypes = files, defaultextension = files)
