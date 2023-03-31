@@ -47,6 +47,9 @@ class LoginPage(Page):
         btn_submit1.pack(fill=tk.X, side=tk.LEFT)
         id = ent_id.get()
         pw = ent_pw.get()
+        #DeckValuePage.lbl_mainboard_price["text"] = "Mainboard Preis: " + mainboardPrice
+        #DeckValuePage.lbl_sideboard_price["text"] = "Sideboard Preis: " + sideboardPrice
+        #DeckValuePage.lbl_total_price["text"] = "Gesamtpreis: " + totalPrice + " €"
 
 
 class UploadPage(Page):
@@ -230,7 +233,7 @@ class GifViewer:
         self.canvas.delete("all")
         self.canvas.create_image(0, 0, anchor=tk.NW, image=self.gif_frames[self.current_frame])
         self.current_frame = (self.current_frame + 1) % len(self.gif_frames)
-        self.master.after(20, self.animate_gif)  # call itself again after 100ms
+        self.master.after(20, self.animate_gif)
 
 
 
