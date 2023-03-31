@@ -47,9 +47,6 @@ class LoginPage(Page):
         btn_submit1.pack(fill=tk.X, side=tk.LEFT)
         id = ent_id.get()
         pw = ent_pw.get()
-        #DeckValuePage.lbl_mainboard_price["text"] = "Mainboard Preis: " + mainboardPrice
-        #DeckValuePage.lbl_sideboard_price["text"] = "Sideboard Preis: " + sideboardPrice
-        #DeckValuePage.lbl_total_price["text"] = "Gesamtpreis: " + totalPrice + " €"
 
 
 class UploadPage(Page):
@@ -58,16 +55,21 @@ class UploadPage(Page):
         Page.__init__(self, *args, **kwargs)
         lbl_insert_file = ttk.Label(self, text="Deckliste", width=20)
         self.txt_decklist = tk.Text(self, height=12)
-        # this function should open the file, save it's location and it's contents + display it in textfield
         btn_open_file = ttk.Button(
             self, text='Deckliste auswählen', command= self.open_text_file)
         btn_calculate_price = ttk.Button(self, text='Preis ausrechnen')
-        btn_calculate_price.bind("<Button-1>",  lambda :[
-                                         self.show_gif, self.save_text_file, self.deckwert_ermittlung, self.master.switch_frame(DeckValuePage)])
+        btn_calculate_price.bind("<Button-1>",  self.calculate_price)
         lbl_insert_file.pack(fill=tk.BOTH, side=tk.TOP)
         self.txt_decklist.pack(fill=tk.BOTH, side=tk.TOP)
         btn_open_file.pack(fill=tk.BOTH, side=tk.LEFT)
         btn_calculate_price.pack(fill=tk.BOTH, side=tk.LEFT)
+
+    def calculate_price(self, event):
+        self.master.switch_frame(DeckValuePage) #Reihenfolge nach Testem wieder abändern
+        self.show_gif()
+        self.save_text_file()
+        self.deckwert_ermittlung()
+        
 
     def open_text_file(self): #✔️
         global deckPath
@@ -103,6 +105,7 @@ class UploadPage(Page):
         t.start()
 
     def deckwert_ermittlung(self): #✔️
+        # THROW ERROR MESSAGE WHEN NO FILE SELECTED
         global id
         global pw
         global deckContent
@@ -126,7 +129,6 @@ class UploadPage(Page):
         driver.find_element(By.NAME, 'user').send_keys(id)
         driver.find_element(By.NAME, 'passwrd').send_keys(pw)
         driver.find_element(By.ID, 'user_login_segment').click()
-        # maybe there is a way to wait if the page has loaded correctly
         WebDriverWait(driver, 30).until(
         EC.presence_of_element_located((By.LINK_TEXT, 'Okay!'))
         )
@@ -140,13 +142,11 @@ class UploadPage(Page):
         driver.find_element(
             By.ID, 'deckbuilder_new_deck_dialog_is_public').click()
         driver.find_element(By.XPATH, "(//span[text()='OK'])[1]").click()
-        # maybe there is a way to wait if the page has loaded correctly
         WebDriverWait(driver, 30).until(
         EC.element_to_be_clickable((By.XPATH, "//span[text()[normalize-space()='Paste/upload list']]"))
         )
         driver.find_element(
             By.XPATH, "//span[text()[normalize-space()='Paste/upload list']]").click()
-        # maybe there is a way to wait if the page has loaded correctly
         WebDriverWait(driver, 30).until(
         EC.presence_of_element_located((By.XPATH, "html[1]/body[1]/div[19]"))
         )
@@ -161,6 +161,10 @@ class UploadPage(Page):
         )
         driver.find_element(By.XPATH, "//span[text()[normalize-space()='Speichern']]").click()
         WebDriverWait(driver, 30).until(
+        EC.presence_of_element_located((By.ID, "ncmp__tool"))
+        )
+        driver.find_element(By.XPATH, "//*[@id='ncmp__tool']/div/div/div[3]/div[1]/button[2]").click()
+        WebDriverWait(driver, 30).until(
         EC.presence_of_element_located((By.XPATH, "html[1]/body[1]/div[13]"))
         )
         driver.find_element(By.XPATH, "(//span[text()='OK'])[2]").click()
@@ -170,6 +174,10 @@ class UploadPage(Page):
         sideboardPrice = driver.find_element(
             By.XPATH, "(//td[@title='Total price on Cardmarket for the card versions listed'])[2]").get_attribute("innerHTML")
         totalPrice = str(float(mainboardPrice.replace('€',''))+float(sideboardPrice.replace('€','')))
+        totalPrice = "{:.2f}".format(float(totalPrice))
+        StrVar_mainboardPrice.set("Mainboard Preis: " + mainboardPrice)
+        StrVar_sideboardPrice.set("Sideboard Preis: " + sideboardPrice)
+        StrVar_totalPrice.set("Gesamtpreis: " + totalPrice + " €")
         driver.quit()
 
 
@@ -178,27 +186,31 @@ class DeckValuePage(Page):
         global mainboardPrice
         global sideboardPrice
         global totalPrice
-        global saved_prices
         Page.__init__(self, *args, **kwargs)
         lbl_mainboard_price = ttk.Label(
-            self, textvariable=StrVar_mainboardPrice, width=20) #❌
+            self, textvariable=StrVar_mainboardPrice) #❌
         lbl_sideboard_price = ttk.Label(
-            self, textvariable=StrVar_sideboardPrice, width=20) #❌
+            self, textvariable=StrVar_sideboardPrice) #❌
         lbl_total_price = ttk.Label(
-            self, textvariable=StrVar_totalPrice, width=20) #❌
-        prices_str = deckName + "/n" + mainboardPrice + "/n" + sideboardPrice + "/n" + totalPrice
-        btn_submit3 = ttk.Button(self, text="Preise sichern & nächstes Deck", width=20,
-                                 command=lambda: [self.master.switch_frame(UploadPage), self.save_prices_in_str(prices_str)])
-        btn_submit4 = ttk.Button(self, text="Alle Preise als Datei abspeichern", width=20, command= self.save_prices_in_file)
+            self, textvariable=StrVar_totalPrice) #❌
+        btn_submit3 = ttk.Button(self, text="Preise sichern & nächstes Deck", command=lambda: [self.save_prices_in_str(), self.master.switch_frame(UploadPage)])
+        btn_submit4 = ttk.Button(self, text="Alle Preise als Datei abspeichern", command= lambda: [self.save_prices_in_str(), self.save_prices_in_file()])
         btn_submit3.bind('<Button-1>', self.pack_forget())
-        lbl_mainboard_price.pack(fill=tk.BOTH, side=tk.LEFT)
-        lbl_sideboard_price.pack(fill=tk.BOTH, side=tk.LEFT)
-        lbl_total_price.pack(fill=tk.BOTH, side=tk.LEFT)
+        lbl_mainboard_price.pack(fill=tk.BOTH, side=tk.TOP)
+        lbl_sideboard_price.pack(fill=tk.BOTH, side=tk.TOP)
+        lbl_total_price.pack(fill=tk.BOTH, side=tk.TOP)
         btn_submit3.pack(fill=tk.BOTH, side=tk.BOTTOM)
         btn_submit4.pack(fill=tk.BOTH, side=tk.BOTTOM)
-    def save_prices_in_str(self, prices):
-        saved_prices = saved_prices + "/n" + prices
+    def save_prices_in_str(self):
+        global saved_prices
+        global prices_str
+        prices_str = deckName + "\n" + mainboardPrice + "\n" + sideboardPrice + "\n" + totalPrice + " €"
+        if saved_prices == "":
+            saved_prices = prices_str
+        else:    
+            saved_prices = saved_prices + "\n" + "\n" + prices_str 
     def save_prices_in_file(self):
+        global saved_prices
         files = [('Text Document', '*.txt')]
         f = fd.asksaveasfile(filetypes = files, defaultextension = files)
         if f is None: # asksaveasfile return `None` if dialog closed with "cancel".
@@ -262,12 +274,13 @@ if __name__ == "__main__":
     deckContent = ""
     deckName = ""
     mainboardPrice = ""
-    StrVar_mainboardPrice = tk.StringVar(root, "Mainboard Preis: " + mainboardPrice)
+    StrVar_mainboardPrice = tk.StringVar(root)
     sideboardPrice = ""
-    StrVar_sideboardPrice = tk.StringVar(root, "Sideboard Preis: " + mainboardPrice)
+    StrVar_sideboardPrice = tk.StringVar(root)
     totalPrice = ""
-    StrVar_totalPrice = tk.StringVar(root, "Gesamtpreis: " + mainboardPrice + " €")
+    StrVar_totalPrice = tk.StringVar(root)
     saved_prices = ""
+    prices_str = ""
     main = MainView(root)
     main.pack(side="top", fill="both", expand=True)
     root.wm_geometry("400x400")
