@@ -70,7 +70,9 @@ class UploadPage(Page):
         else:
             self.show_gif()
             self.save_text_file()
-            self.master.switch_frame(DeckValuePage)   
+            # Run deckwert_ermittlung function in a separate thread
+            t = threading.Thread(target=self.deckwert_ermittlung)
+            t.start()
 
     def open_text_file(self): #✔️
         global deckPath
@@ -80,6 +82,8 @@ class UploadPage(Page):
                             title="Open Text file",
                             filetypes=(("Text Files", "*.txt"),))
         # read the text file and show its content on the Text
+        if self.txt_decklist.get("1.0", tk.END) != "\n":
+            self.txt_decklist.delete('1.0', tk.END)
         self.txt_decklist.insert('1.0', f.read())
         deckPath = f.name
         deckContent = f.read()
@@ -103,8 +107,6 @@ class UploadPage(Page):
         lbl_text = tk.Label(self.gif_viewer, text="Deckwerte werden ermittelt...")
         lbl_text.pack(fill=tk.BOTH, side=tk.TOP)
         GifViewer(self.gif_viewer, "loading.gif")
-        t = threading.Thread(target=self.deckwert_ermittlung)
-        t.start()
 
 
     def deckwert_ermittlung(self): #✔️
@@ -117,8 +119,8 @@ class UploadPage(Page):
         global deckName
         # Create the webdriver object
         chrome_options = webdriver.ChromeOptions()
-        #chrome_options.add_argument("--headless")
-        #chrome_options.add_argument('window-size=1920x1080')
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument('window-size=1920x1080')
         # enter your download directory here
         prefs = {'download.default_directory': ''}
         chrome_options.add_experimental_option('prefs', prefs)
@@ -182,6 +184,8 @@ class UploadPage(Page):
         StrVar_totalPrice.set("Gesamtpreis: " + totalPrice + " €")
         StrVar_deckname.set(deckName)
         driver.quit()
+        self.gif_viewer.destroy()
+        self.master.switch_frame(DeckValuePage)
 
 
 class DeckValuePage(Page):
