@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 import threading
 from PIL import Image, ImageTk
-from itertools import count, cycle
+from tkinter import messagebox
 from tkinter import filedialog as fd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -57,19 +57,20 @@ class UploadPage(Page):
         self.txt_decklist = tk.Text(self, height=12)
         btn_open_file = ttk.Button(
             self, text='Deckliste auswählen', command= self.open_text_file)
-        btn_calculate_price = ttk.Button(self, text='Preis ausrechnen')
-        btn_calculate_price.bind("<Button-1>",  self.calculate_price)
+        btn_calculate_price = ttk.Button(self, text='Preis ausrechnen', command= self.calculate_price)
         lbl_insert_file.pack(fill=tk.BOTH, side=tk.TOP)
         self.txt_decklist.pack(fill=tk.BOTH, side=tk.TOP)
         btn_open_file.pack(fill=tk.BOTH, side=tk.LEFT)
         btn_calculate_price.pack(fill=tk.BOTH, side=tk.LEFT)
 
-    def calculate_price(self, event):
-        self.master.switch_frame(DeckValuePage) #Reihenfolge nach Testem wieder abändern
-        self.show_gif()
-        self.save_text_file()
-        self.deckwert_ermittlung()
-        
+    def calculate_price(self):
+        # Throw error when no file selected
+        if deckPath == "":
+            messagebox.showerror('Python Error', 'Error: Keine Deckliste ausgewählt! Bitte wähle zuerst eine Deckliste aus.')
+        else:
+            self.show_gif()
+            self.save_text_file()
+            self.master.switch_frame(DeckValuePage)   
 
     def open_text_file(self): #✔️
         global deckPath
@@ -98,14 +99,15 @@ class UploadPage(Page):
 
     def show_gif(self):
         self.gif_viewer = tk.Toplevel(self)
+        self.gif_viewer.wm_iconbitmap("money-icon.ico")
         lbl_text = tk.Label(self.gif_viewer, text="Deckwerte werden ermittelt...")
         lbl_text.pack(fill=tk.BOTH, side=tk.TOP)
         GifViewer(self.gif_viewer, "loading.gif")
-        t = threading.Thread(target=self.deckwert_ermittlung, args=(self.gif_viewer,))
+        t = threading.Thread(target=self.deckwert_ermittlung)
         t.start()
 
+
     def deckwert_ermittlung(self): #✔️
-        # THROW ERROR MESSAGE WHEN NO FILE SELECTED
         global id
         global pw
         global deckContent
@@ -178,6 +180,7 @@ class UploadPage(Page):
         StrVar_mainboardPrice.set("Mainboard Preis: " + mainboardPrice)
         StrVar_sideboardPrice.set("Sideboard Preis: " + sideboardPrice)
         StrVar_totalPrice.set("Gesamtpreis: " + totalPrice + " €")
+        StrVar_deckname.set(deckName)
         driver.quit()
 
 
@@ -187,15 +190,18 @@ class DeckValuePage(Page):
         global sideboardPrice
         global totalPrice
         Page.__init__(self, *args, **kwargs)
+        lbl_deckname = ttk.Label(
+            self, textvariable=StrVar_deckname)
         lbl_mainboard_price = ttk.Label(
-            self, textvariable=StrVar_mainboardPrice) #❌
+            self, textvariable=StrVar_mainboardPrice)
         lbl_sideboard_price = ttk.Label(
-            self, textvariable=StrVar_sideboardPrice) #❌
+            self, textvariable=StrVar_sideboardPrice)
         lbl_total_price = ttk.Label(
-            self, textvariable=StrVar_totalPrice) #❌
+            self, textvariable=StrVar_totalPrice)
         btn_submit3 = ttk.Button(self, text="Preise sichern & nächstes Deck", command=lambda: [self.save_prices_in_str(), self.master.switch_frame(UploadPage)])
         btn_submit4 = ttk.Button(self, text="Alle Preise als Datei abspeichern", command= lambda: [self.save_prices_in_str(), self.save_prices_in_file()])
         btn_submit3.bind('<Button-1>', self.pack_forget())
+        lbl_deckname.pack(fill=tk.BOTH, side=tk.TOP)
         lbl_mainboard_price.pack(fill=tk.BOTH, side=tk.TOP)
         lbl_sideboard_price.pack(fill=tk.BOTH, side=tk.TOP)
         lbl_total_price.pack(fill=tk.BOTH, side=tk.TOP)
@@ -273,6 +279,7 @@ if __name__ == "__main__":
     deckPath = ""
     deckContent = ""
     deckName = ""
+    StrVar_deckname = tk.StringVar(root)
     mainboardPrice = ""
     StrVar_mainboardPrice = tk.StringVar(root)
     sideboardPrice = ""
