@@ -10,6 +10,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
 
 
 """
@@ -32,36 +33,36 @@ class LoginPage(Page):
         global id
         global pw
         Page.__init__(self, *args, **kwargs)
-        lbl_id = ttk.Label(self, text="ID: ")
+        lbl_id = ttk.Label(self, text="ID: ", font = "Verdana 10 bold")
         self.defaultID = tk.StringVar(value='MagicNerdism')
         self.defaultPW = tk.StringVar(value='Test1234')
-        ent_id = ttk.Entry(self, textvariable=self.defaultID)
-        lbl_pw = ttk.Label(self, text="Password: ")
-        ent_pw = ttk.Entry(self, textvariable=self.defaultPW, show="•")
+        ent_id = ttk.Entry(self, textvariable=self.defaultID, font = "Verdana 10")
+        lbl_pw = ttk.Label(self, text="Password: ", font = "Verdana 10 bold")
+        ent_pw = ttk.Entry(self, textvariable=self.defaultPW, show="•", font = "Verdana 10")
         btn_submit1 = ttk.Button(
             self, text="Weiter", command=lambda: self.master.switch_frame(UploadPage))
-        lbl_id.pack(fill=tk.X, side=tk.LEFT)
-        ent_id.pack(fill=tk.X, side=tk.LEFT)
-        lbl_pw.pack(fill=tk.X, side=tk.LEFT)
-        ent_pw.pack(fill=tk.X, side=tk.LEFT)
-        btn_submit1.pack(fill=tk.X, side=tk.LEFT)
+        lbl_id.grid(row=0, column=0, padx='5', pady='5', sticky='ew')
+        ent_id.grid(row=0, column=1, padx='5', pady='5', ipadx=25, sticky='ew')
+        lbl_pw.grid(row=1, column=0, padx='5', pady='5', sticky='ew')
+        ent_pw.grid(row=1, column=1, padx='5', pady='5', ipadx=25, sticky='ew')
+        btn_submit1.grid(row=0, column=2, rowspan=2, sticky=tk.N+tk.S)
         id = ent_id.get()
         pw = ent_pw.get()
 
 
+
 class UploadPage(Page):
-    parent = LoginPage
     def __init__(self, *args, **kwargs):
         Page.__init__(self, *args, **kwargs)
-        lbl_insert_file = ttk.Label(self, text="Deckliste", width=20)
-        self.txt_decklist = tk.Text(self, height=12)
+        lbl_insert_file = ttk.Label(self, text="Deckliste", font = "Verdana 10 bold")
+        self.txt_decklist = tk.Text(self, height=18, width=15)
         btn_open_file = ttk.Button(
             self, text='Deckliste auswählen', command= self.open_text_file)
         btn_calculate_price = ttk.Button(self, text='Preis ausrechnen', command= self.calculate_price)
-        lbl_insert_file.pack(fill=tk.BOTH, side=tk.TOP)
-        self.txt_decklist.pack(fill=tk.BOTH, side=tk.TOP)
-        btn_open_file.pack(fill=tk.BOTH, side=tk.LEFT)
-        btn_calculate_price.pack(fill=tk.BOTH, side=tk.LEFT)
+        lbl_insert_file.grid(row=0, column=0, columnspan=2, padx='5', pady='5')
+        self.txt_decklist.grid(row=1, column=0, columnspan=2, padx='5', pady='5', sticky='ew')
+        btn_open_file.grid(row=2, column=0, padx='5', pady='5', ipady=10, ipadx=41, sticky='ew')
+        btn_calculate_price.grid(row=2, column=1, padx='5', pady='5', ipady=10, ipadx=41, sticky='ew')
 
     def calculate_price(self):
         # Throw error when no file selected
@@ -105,7 +106,7 @@ class UploadPage(Page):
         self.gif_viewer = tk.Toplevel(self)
         self.gif_viewer.wm_iconbitmap("money-icon.ico")
         lbl_text = tk.Label(self.gif_viewer, text="Deckwerte werden ermittelt...")
-        lbl_text.pack(fill=tk.BOTH, side=tk.TOP)
+        lbl_text.grid(row=0, column=0)
         GifViewer(self.gif_viewer, "loading.gif")
 
 
@@ -155,7 +156,7 @@ class UploadPage(Page):
         EC.presence_of_element_located((By.XPATH, "html[1]/body[1]/div[19]"))
         )
         driver.find_element(
-            By.ID, 'deckbuilder_upload_list_dialog_textarea').send_keys(deckContent.replace('\t',' ').replace('Mainboard','').replace('Sideboard','').replace('Sidedeck','').replace('Maindeck',''))
+            By.ID, 'deckbuilder_upload_list_dialog_textarea').send_keys(deckContent.replace('\t',' ').replace('//Sidedeck','//Sideboard').replace('//Maindeck','//Mainboard').replace('Sidedeck','//Sideboard').replace('Maindeck','//Mainboard'))
         WebDriverWait(driver, 30).until(
         EC.element_to_be_clickable((By.XPATH, "(//button[contains(@class,'button_primary ui-button')]//span)[3]"))
         )
@@ -175,17 +176,21 @@ class UploadPage(Page):
         driver.find_element(By.ID, 'ui-id-14').click()
         mainboardPrice = driver.find_element(
             By.XPATH, "(//td[@title='Total price on Cardmarket for the card versions listed'])[1]").get_attribute("innerHTML")
-        sideboardPrice = driver.find_element(
-            By.XPATH, "(//td[@title='Total price on Cardmarket for the card versions listed'])[2]").get_attribute("innerHTML")
-        totalPrice = str(float(mainboardPrice.replace('€',''))+float(sideboardPrice.replace('€','')))
-        totalPrice = "{:.2f}".format(float(totalPrice))
-        StrVar_mainboardPrice.set("Mainboard Preis: " + mainboardPrice)
-        StrVar_sideboardPrice.set("Sideboard Preis: " + sideboardPrice)
-        StrVar_totalPrice.set("Gesamtpreis: " + totalPrice + " €")
-        StrVar_deckname.set(deckName)
+        try: 
+            sideboardPrice = driver.find_element(
+                By.XPATH, "(//td[@title='Total price on Cardmarket for the card versions listed'])[2]").get_attribute("innerHTML")
+            totalPrice = str(float(mainboardPrice.replace('€',''))+float(sideboardPrice.replace('€','')))
+            totalPrice = "{:.2f}".format(float(totalPrice))
+            StrVar_mainboardPrice.set(mainboardPrice)
+            StrVar_sideboardPrice.set(sideboardPrice)
+            StrVar_totalPrice.set(totalPrice + " €")
+            StrVar_deckname.set(deckName)
+            self.master.switch_frame(DeckValuePage)      
+        except NoSuchElementException:     
+            messagebox.showerror('Python Error', 'Deck hat kein Sideboard. Bitte fügen sie dieses hinzu.') 
         driver.quit()
         self.gif_viewer.destroy()
-        self.master.switch_frame(DeckValuePage)
+        
 
 
 class DeckValuePage(Page):
@@ -194,23 +199,43 @@ class DeckValuePage(Page):
         global sideboardPrice
         global totalPrice
         Page.__init__(self, *args, **kwargs)
-        lbl_deckname = ttk.Label(
-            self, textvariable=StrVar_deckname)
-        lbl_mainboard_price = ttk.Label(
-            self, textvariable=StrVar_mainboardPrice)
-        lbl_sideboard_price = ttk.Label(
-            self, textvariable=StrVar_sideboardPrice)
-        lbl_total_price = ttk.Label(
-            self, textvariable=StrVar_totalPrice)
-        btn_submit3 = ttk.Button(self, text="Preise sichern & nächstes Deck", command=lambda: [self.save_prices_in_str(), self.master.switch_frame(UploadPage)])
+        deckname_frame = ttk.Frame(self)
+        deckname_frame.grid(row=0, column=0, columnspan=2)
+        lbl_deckname = ttk.Label(deckname_frame, textvariable=StrVar_deckname, font = "Verdana 20 bold")
+        lbl_deckname.grid()
+        
+        mainboard_frame = ttk.Frame(self)
+        mainboard_frame.grid(row=1, column=0, sticky='ew', padx='10')
+        lbl_mainboard = ttk.Label(mainboard_frame, text="Mainboard Preis: ", font = "Verdana 20")
+        lbl_mainboard.grid()
+        mainboard_frame_prices = ttk.Frame(self)
+        mainboard_frame_prices.grid(row=1, column=1, sticky='ew', padx='10')
+        lbl_mainboard_price = ttk.Label(mainboard_frame_prices, textvariable=StrVar_mainboardPrice, font = "Verdana 20 bold")
+        lbl_mainboard_price.grid()
+        
+        sideboard_frame = ttk.Frame(self)
+        sideboard_frame.grid(row=2, column=0, sticky='ew', padx='10')
+        lbl_sideboard = ttk.Label(sideboard_frame, text="Sideboard Preis: ", font = "Verdana 20")
+        lbl_sideboard.grid()
+        sideboard_frame_prices = ttk.Frame(self)
+        sideboard_frame_prices.grid(row=2, column=1, sticky='ew', padx='10')
+        lbl_sideboard_price = ttk.Label(sideboard_frame_prices, textvariable=StrVar_sideboardPrice, font = "Verdana 20 bold")
+        lbl_sideboard_price.grid()
+        
+        totalprice_frame = ttk.Frame(self)
+        totalprice_frame.grid(row=3, column=0, sticky='ew', padx='10')
+        lbl_totalprice = ttk.Label(totalprice_frame, text="Gesamtpreis: ", font = "Verdana 20")
+        lbl_totalprice.grid()
+        totalprice_frame_prices = ttk.Frame(self)
+        totalprice_frame_prices.grid(row=3, column=1, sticky='ew', padx='10')
+        lbl_total_price = ttk.Label(totalprice_frame_prices, textvariable=StrVar_totalPrice, font = "Verdana 20 bold")
+        lbl_total_price.grid()
+        
+        btn_submit3 = ttk.Button(self, text="Preise zwischenspeichern & nächstes Deck", command=lambda: [self.save_prices_in_str(), self.master.switch_frame(UploadPage)])
         btn_submit4 = ttk.Button(self, text="Alle Preise als Datei abspeichern", command= lambda: [self.save_prices_in_str(), self.save_prices_in_file()])
-        btn_submit3.bind('<Button-1>', self.pack_forget())
-        lbl_deckname.pack(fill=tk.BOTH, side=tk.TOP)
-        lbl_mainboard_price.pack(fill=tk.BOTH, side=tk.TOP)
-        lbl_sideboard_price.pack(fill=tk.BOTH, side=tk.TOP)
-        lbl_total_price.pack(fill=tk.BOTH, side=tk.TOP)
-        btn_submit3.pack(fill=tk.BOTH, side=tk.BOTTOM)
-        btn_submit4.pack(fill=tk.BOTH, side=tk.BOTTOM)
+        btn_submit3.grid(row=4, column=0, columnspan=2, padx='5', pady='5', ipadx=30, ipady=10, sticky='ew')
+        btn_submit4.grid(row=5, column=0, columnspan=2, padx='5', pady='5', ipadx=30, ipady=10, sticky='ew')
+        
     def save_prices_in_str(self):
         global saved_prices
         global prices_str
@@ -219,6 +244,7 @@ class DeckValuePage(Page):
             saved_prices = prices_str
         else:    
             saved_prices = saved_prices + "\n" + "\n" + prices_str 
+    
     def save_prices_in_file(self):
         global saved_prices
         files = [('Text Document', '*.txt')]
@@ -227,6 +253,7 @@ class DeckValuePage(Page):
             return
         f.write(saved_prices)
         f.close()
+
 
 class GifViewer:
     def __init__(self, master, gif_path):
@@ -237,7 +264,7 @@ class GifViewer:
         self.current_frame = 0
         
         self.canvas = tk.Canvas(self.master, height=140, width=130)
-        self.canvas.pack(side=tk.BOTTOM)
+        self.canvas.grid(row=1, column=0)
         
         self.animate_gif()
 
@@ -267,6 +294,11 @@ class MainView(tk.Frame):
             page = F(self)
             self.pages[F] = page
             page.grid(row=0, column=0, sticky="nsew")
+        
+        # Add row and column configuration to the main frame
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+
         self.switch_frame(LoginPage)
 
     def switch_frame(self, frame_class):
@@ -293,6 +325,7 @@ if __name__ == "__main__":
     saved_prices = ""
     prices_str = ""
     main = MainView(root)
-    main.pack(side="top", fill="both", expand=True)
+    main.grid(row=0, column=0, sticky="nsew") # Use grid instead of pack
     root.wm_geometry("400x400")
     root.mainloop()
+
