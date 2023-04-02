@@ -2,6 +2,8 @@ import re
 import tkinter as tk
 from tkinter import ttk
 import threading
+import os 
+import sys
 from PIL import Image, ImageTk
 from tkinter import messagebox
 from tkinter import filedialog as fd
@@ -107,7 +109,7 @@ class UploadPage(Page):
         self.gif_viewer.wm_iconbitmap("money-icon.ico")
         lbl_text = tk.Label(self.gif_viewer, text="Deckwerte werden ermittelt...")
         lbl_text.grid(row=0, column=0)
-        GifViewer(self.gif_viewer, "loading.gif")
+        GifViewer(self.gif_viewer, resource_path("loading.gif"))
 
 
     def deckwert_ermittlung(self): #✔️
@@ -305,11 +307,20 @@ class MainView(tk.Frame):
         page = self.pages[frame_class]
         page.show()
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Deckwert Ermittler")
-    root.wm_iconbitmap("money-icon.ico")
+    root.wm_iconbitmap(resource_path("money-icon.ico"))
     id = ""
     pw = ""
     deckPath = ""
