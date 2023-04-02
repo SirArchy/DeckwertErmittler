@@ -5,6 +5,7 @@ import threading
 import os 
 import sys
 from PIL import Image, ImageTk
+from configparser import ConfigParser
 from tkinter import messagebox
 from tkinter import filedialog as fd
 from selenium import webdriver
@@ -121,13 +122,17 @@ class UploadPage(Page):
         global totalPrice
         global deckName
         # Create the webdriver object
+        config = ConfigParser()
+        config.read("example.ini")
+        CHROME_DRIVER_PATH = config.get("chromedriver", "path")
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument("--headless")
         chrome_options.add_argument('window-size=1920x1080')
         # enter your download directory here
         prefs = {'download.default_directory': ''}
         chrome_options.add_experimental_option('prefs', prefs)
-        driver = webdriver.Chrome(chrome_options=chrome_options)
+        CHROME_DRIVER_PATH = config.get("chromedriver", "path")
+        driver = webdriver.Chrome(resource_path(CHROME_DRIVER_PATH), chrome_options=chrome_options)
         # get website link
         driver.get('https://deckstats.net')
         # get deckname and decklist
