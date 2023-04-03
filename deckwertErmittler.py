@@ -107,10 +107,10 @@ class UploadPage(Page):
 
     def show_gif(self):
         self.gif_viewer = tk.Toplevel(self)
-        self.gif_viewer.wm_iconbitmap("money-icon.ico")
+        self.gif_viewer.wm_iconbitmap("./assets/money-icon.ico")
         lbl_text = tk.Label(self.gif_viewer, text="Deckwerte werden ermittelt...")
         lbl_text.grid(row=0, column=0)
-        GifViewer(self.gif_viewer, resource_path("loading.gif"))
+        GifViewer(self.gif_viewer, resource_path("./assets/loading.gif"))
 
 
     def deckwert_ermittlung(self): #✔️
@@ -122,17 +122,13 @@ class UploadPage(Page):
         global totalPrice
         global deckName
         # Create the webdriver object
-        config = ConfigParser()
-        config.read("example.ini")
-        CHROME_DRIVER_PATH = config.get("chromedriver", "path")
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument("--headless")
         chrome_options.add_argument('window-size=1920x1080')
         # enter your download directory here
         prefs = {'download.default_directory': ''}
         chrome_options.add_experimental_option('prefs', prefs)
-        CHROME_DRIVER_PATH = config.get("chromedriver", "path")
-        driver = webdriver.Chrome(resource_path(CHROME_DRIVER_PATH), chrome_options=chrome_options)
+        driver = webdriver.Chrome(resource_path('./driver/chromedriver.exe'), chrome_options=chrome_options)
         # get website link
         driver.get('https://deckstats.net')
         # get deckname and decklist
@@ -325,7 +321,7 @@ def resource_path(relative_path):
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Deckwert Ermittler")
-    root.wm_iconbitmap(resource_path("money-icon.ico"))
+    root.wm_iconbitmap(resource_path("./assets/money-icon.ico"))
     id = ""
     pw = ""
     deckPath = ""
