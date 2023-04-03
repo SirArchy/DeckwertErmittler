@@ -108,7 +108,7 @@ class UploadPage(Page):
     def show_gif(self):
         self.gif_viewer = tk.Toplevel(self)
         self.gif_viewer.wm_iconbitmap(resource_path(".\assets\money-icon.ico"))
-        lbl_text = tk.Label(self.gif_viewer, text="Deckwerte werden ermittelt...")
+        lbl_text = tk.Label(self.gif_viewer, text="Deckwerte werden ermittelt...", font = "Verdana 15")
         lbl_text.grid(row=0, column=0)
         GifViewer(self.gif_viewer, resource_path(".\assets\loading.gif"))
 
